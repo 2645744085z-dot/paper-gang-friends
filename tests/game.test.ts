@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makePlayer, makeRoom, startGame, revealNextPhase, chooseChip, settle, startNextHeist, publicState } from '../src/game.js';
+import { HAND_RULES, buildOrderComparison } from '../src/result.js';
 import type { Room } from '../src/game.js';
 import type { Card } from '../src/poker.js';
 
@@ -185,5 +186,76 @@ describe('状态视图', () => {
     expect(other.players.find((p) => p.id === b)!.hand).toHaveLength(2);
     expect(guest.players.every((p) => p.hand === undefined)).toBe(true);
     expect(own.viewerId).toBe(a);
+  });
+});
+
+describe('结算详情与抢筹顺序对照', () => {
+  it('结算结果包含每名玩家的手牌、牌型名称与筹码数据', () => {
+    const room = buildRoom(3);
+    rigHands(room);
+    room.phase = 'river';
+    const [a, b, c] = ids(room);
+    [a, b, c].forEach((id, i) => { room.players.get(id)!.currentChip = i + 1; });
+    const result = settle(room);
+    expect(result.players).toHaveLength(3);
+    for (const p of result.players) {
+      expect(p.hand).toHaveLength(2);
+      expect(p.result.name).toBeTruthy();
+      expect(p.result.keyCards).toBeTruthy();
+      expect(p.finalChip).not.toBeNull();
+      expect(p.targetChip).toBeGreaterThan(0);
+      expect(p.order).toBeGreaterThan(0);
+    }
+    expect(result.players[0].result.name).toBe('一对');
+    expect(result.players[2].result.name).toBe('高牌');
+    // 牌力最强者目标筹码最高
+    expect(result.players[0].targetChip).toBe(3);
+    expect(result.players[2].targetChip).toBe(1);
+  });
+
+  it('顺序一致时 orderComparison 每一位都正确且按 1★→N★ 排列', () => {
+    const room = buildRoom(3);
+    rigHands(room);
+    room.phase = 'river';
+    const [a, b, c] = ids(room);
+    [a, b, c].forEach((id, i) => { room.players.get(id)!.currentChip = i + 1; });
+    const result = settle(room);
+    expect(result.success).toBe(true);
+    expect(result.orderComparison).toHaveLength(3);
+    expect(result.orderComparison.map((s) => s.chipValue)).toEqual([1, 2, 3]);
+    expect(result.orderComparison.every((s) => s.correct)).toBe(true);
+    // 1 星目标位是全场牌力最弱的玩家
+    expect(result.orderComparison[0].target.result.name).toBe('高牌');
+    expect(result.orderComparison[2].target.result.name).toBe('一对');
+    expect(result.orderComparison).toEqual(buildOrderComparison(result));
+  });
+
+  it('顺序错乱时给出不一致标记与中文解释', () => {
+    const room = buildRoom(3);
+    rigHands(room);
+    room.phase = 'river';
+    const [a, b, c] = ids(room);
+    room.players.get(a)!.currentChip = 3;
+    room.players.get(b)!.currentChip = 2;
+    room.players.get(c)!.currentChip = 1;
+    const result = settle(room);
+    expect(result.success).toBe(false);
+    expect(result.orderComparison.some((s) => !s.correct)).toBe(true);
+    for (const slot of result.orderComparison.filter((s) => !s.correct)) {
+      expect(slot.explanation).toContain('应拿');
+      expect(slot.explanation).toContain('实际');
+    }
+    // 2 星位置目标与实际是同一名玩家（b 的筹码没被动过）
+    const middle = result.orderComparison[1];
+    expect(middle.correct).toBe(true);
+    expect(middle.actual?.playerId).toBe(middle.target.playerId);
+  });
+
+  it('牌型规则列表覆盖十大牌型且严格从大到小', () => {
+    expect(HAND_RULES.map((r) => r.name)).toEqual([
+      '皇家同花顺', '同花顺', '四条', '葫芦', '同花', '顺子', '三条', '两对', '一对', '高牌',
+    ]);
+    expect(HAND_RULES.map((r) => r.rank)).toEqual([10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
+    expect(HAND_RULES.find((r) => r.rank === 5)!.detail).toContain('A2345');
   });
 });

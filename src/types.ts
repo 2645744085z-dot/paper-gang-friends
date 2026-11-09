@@ -1,4 +1,5 @@
 import type { Card, HandResult } from './poker.js';
+import type { OrderSlot } from './result.js';
 
 export type Phase = 'preflop' | 'flop' | 'turn' | 'river' | 'showdown';
 export const PHASES: Phase[] = ['preflop', 'flop', 'turn', 'river', 'showdown'];
@@ -23,8 +24,16 @@ export type Player = {
 };
 
 export type PlayerView = Omit<Player, 'hand'> & { hand?: Card[] };
-export type ResultPlayer = { playerId: string; name: string; hand: Card[]; result: HandResult; finalChip: number | null; order: number };
-export type GameResult = { heistNumber: number; success: boolean; alarms: number; vaults: number; players: ResultPlayer[]; resolvedAt: number; reason: string };
+export type ResultPlayer = {
+  playerId: string; name: string; hand: Card[]; result: HandResult;
+  finalChip: number | null; targetChip: number; order: number;
+};
+export type GameResult = {
+  heistNumber: number; success: boolean; alarms: number; vaults: number;
+  players: ResultPlayer[]; resolvedAt: number; reason: string;
+  /** 目标顺序（1★ → N★）与实际顺序逐位对照，供结算界面展示 */
+  orderComparison: OrderSlot[];
+};
 
 export type RoomStateView = {
   code: string; hostId: string; gameState: 'lobby' | 'playing' | 'result' | 'ended'; phase: Phase;

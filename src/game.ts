@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { createDeck, evaluateBestHand, shuffle } from './poker.js';
 import type { Card } from './poker.js';
 import { PHASES, PHASE_NAMES } from './types.js';
+import { buildOrderComparison } from './result.js';
 import type { ChipAction, GameResult, Phase, Player, PlayerView, RoomStateView } from './types.js';
 
 export type Room = {
@@ -93,12 +94,14 @@ export function chooseChip(room: Room, actorId: string, value: number, sourcePla
 export function settle(room: Room): GameResult {
   if (room.gameState !== 'playing' || room.phase !== 'river') throw new Error('还没有到结算阶段');
   room.phase = 'showdown';
-  const players = [...room.players.values()].map((p) => ({ playerId: p.id, name: p.name, hand: p.hand, result: evaluateBestHand([...p.hand, ...room.communityCards]), finalChip: p.currentChip, order: 0 }));
+  const players = [...room.players.values()].map((p) => ({ playerId: p.id, name: p.name, hand: p.hand, result: evaluateBestHand([...p.hand, ...room.communityCards]), finalChip: p.currentChip, targetChip: 0, order: 0 }));
   players.sort((a,b) => b.result.score.reduce((n,v,i)=>n + v * Math.pow(15, 8-i), 0) - a.result.score.reduce((n,v,i)=>n + v * Math.pow(15, 8-i), 0));
   players.forEach((p, i) => { p.order = i + 1; });
-  const chips = players.map((p) => p.finalChip ?? 0); const expected = [...chips].sort((a,b)=>b-a);
-  const success = chips.every((chip, i) => chip === expected[i]);
+  // `players` 按牌力从强到弱排列，因此强牌应拿更高星级筹码。
+  players.forEach((p, i) => { p.targetChip = players.length - i; });
+  const success = players.every((p) => p.finalChip === p.targetChip);
   if (success) room.vaults += 1; else room.alarms += 1;
-  const result: GameResult = { heistNumber: room.heistNumber, success, alarms: room.alarms, vaults: room.vaults, players, resolvedAt: Date.now(), reason: success ? '筹码顺序与牌力从弱到强一致，保险箱已打开。' : '筹码顺序与牌力不一致，警报被触发。' };
+  const result: GameResult = { heistNumber: room.heistNumber, success, alarms: room.alarms, vaults: room.vaults, players, resolvedAt: Date.now(), reason: success ? '筹码顺序与牌力从弱到强一致，保险箱已打开。' : '筹码顺序与牌力不一致，警报被触发。', orderComparison: [] };
+  result.orderComparison = buildOrderComparison(result);
   room.result = result; room.gameState = 'result'; room.version += 1; return result;
 }

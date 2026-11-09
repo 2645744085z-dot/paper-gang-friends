@@ -3,3 +3,103 @@
 @media(max-width:600px){.shell{padding:16px 13px 35px}.topbar{margin-bottom:18px}.game-topbar{align-items:start;height:auto;flex-wrap:wrap}.game-metrics{order:3;width:100%;justify-content:space-between;gap:5px}.topbar-actions{margin-left:auto}.brand-mini{font-size:13px}h1{font-size:54px}.hero-subtitle{font-size:16px}.access-panel{padding:25px 20px}.room-code{font-size:33px}.room-code-row{align-items:center;gap:10px}.lobby-main,.roster-panel{padding:22px 18px}.lobby-actions{display:block}.lobby-actions .primary-button{width:100%}.action-hint{display:block;margin-top:10px}.table-panel{padding:18px 13px}.community-cards{gap:6px}.playing-card{width:53px;height:76px}.playing-card .rank{font-size:20px}.playing-card .suit{font-size:17px}.chip-pool{gap:9px;flex-wrap:wrap}.chip{width:45px;height:45px;font-size:13px}.player-grid{grid-template-columns:1fr 1fr;gap:8px}.player-card{padding:11px}.player-name{font-size:12px}.player-metrics{gap:7px}.phase-controls{display:block}.control-message{margin-bottom:12px}.phase-controls .primary-button{width:100%}.result-hero{padding:35px 20px}.result-hero h1{font-size:34px}.result-stat-row{grid-template-columns:1.2fr repeat(4,1fr);gap:4px;font-size:10px}.result-chip{font-size:10px}.toast-region{left:13px;right:13px;bottom:13px}}
 
 .chip-6{--chip-color:#3f8f7a;background:var(--chip-color);color:#fff}
+/* ---------- 结算页：可视化牌面 / 抢筹顺序对照 / 牌型大小规则 ---------- */
+.playing-card.small{height:62px;width:45px;border-radius:6px;box-shadow:0 3px 8px #0004}
+.playing-card.small .rank{font-size:16px}
+.playing-card.small .suit{font-size:14px;margin-top:2px}
+.result-cards{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0 7px}
+.result-player{flex-wrap:wrap;gap:10px;align-items:flex-start}
+.result-player.chip-wrong{border-left:3px solid var(--red);padding-left:12px}
+.result-player-detail{margin-top:2px}
+.result-player-chips{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:9px;font-size:12px;color:#b5c3ba}
+.badge{border-radius:99px;padding:4px 10px;font-size:11px;font-weight:700}
+.badge.ok{color:var(--teal);background:#67d0b11c;border:1px solid #67d0b14d}
+.badge.bad{color:#ffb0a7;background:#e86d611c;border:1px solid #e86d614d}
+.result-chip{white-space:nowrap}
+.order-comparison{display:grid;gap:11px;margin-top:16px}
+.order-slot{display:grid;grid-template-columns:56px 1fr 1fr 30px;gap:10px;align-items:center;background:#0b1110;border:1px solid #293732;border-radius:11px;padding:13px 14px;grid-template-areas:"chip target actual mark" "explain explain explain explain"}
+.order-slot.correct{border-color:#699d84}
+.order-slot.mismatch{border-color:#a45c54;box-shadow:0 0 18px #e86d611f}
+.order-slot-chip{grid-area:chip}
+.order-slot-chip .chip{width:46px;height:46px;font-size:13px;cursor:default}
+.order-slot-box{min-width:0}
+.order-slot-label{font-size:10px;color:#718077;letter-spacing:.06em}
+.order-slot-body{font-size:13px;color:#e5ebe4;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.order-slot-mark{grid-area:mark;font-size:19px;font-weight:800;text-align:center}
+.order-slot.correct .order-slot-mark{color:var(--teal)}
+.order-slot.mismatch .order-slot-mark{color:var(--red)}
+.order-explain{grid-area:explain;font-size:11px;line-height:1.6;color:#a9b5ae;border-top:1px dashed #2c3a34;padding-top:9px}
+.order-slot.mismatch .order-explain{color:#ffb0a7}
+.hand-rules-grid{display:grid;gap:10px;margin-top:16px}
+.hand-rule-row{display:flex;align-items:center;gap:14px;background:#0b1110;border:1px solid #293732;border-radius:11px;padding:10px 13px;flex-wrap:wrap}
+.hand-rule-cards{display:flex;gap:4px}
+.mini-card{width:34px;height:48px;border-radius:5px;background:#f4f1e7;color:#191b17;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;box-shadow:0 2px 5px #0004;flex:none}
+.mini-card .rank{font-size:13px;line-height:1}
+.mini-card .suit{font-size:11px;margin-top:1px}
+.mini-card.red{color:#c3423d}
+.hand-rule-name{font-size:14px;font-weight:800;color:var(--gold-2)}
+.hand-rule-detail{font-size:11px;color:#a9b5ae;margin-top:3px;line-height:1.5}
+.hand-rule-text{flex:1;min-width:150px}
+.rules-intro,.order-intro{color:#8e9d94;font-size:12px;margin-top:6px;line-height:1.6}
+.result-panel-note{color:#718077;font-size:11px;margin-top:8px;line-height:1.5}
+@media(max-width:600px){
+  .playing-card.small{height:52px;width:37px}
+  .playing-card.small .rank{font-size:13px}
+  .playing-card.small .suit{font-size:11px}
+  .order-slot{grid-template-columns:46px 1fr 1fr 24px;padding:11px 10px;gap:8px}
+  .order-slot-chip .chip{width:38px;height:38px;font-size:11px}
+  .order-slot-body{font-size:11px}
+  .mini-card{width:26px;height:38px}
+  .mini-card .rank{font-size:10px}
+  .mini-card .suit{font-size:9px}
+}
+/* ---------- 结算页：可视化牌面 / 抢筹顺序对照 / 牌型大小规则 ---------- */
+.playing-card.small{height:62px;width:45px;border-radius:6px;box-shadow:0 3px 8px #0004}
+.playing-card.small .rank{font-size:16px}
+.playing-card.small .suit{font-size:14px;margin-top:2px}
+.result-cards{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0 7px}
+.result-player{flex-wrap:wrap;gap:10px;align-items:flex-start}
+.result-player.chip-wrong{border-left:3px solid var(--red);padding-left:12px}
+.result-player-detail{margin-top:2px}
+.result-player-chips{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:9px;font-size:12px;color:#b5c3ba}
+.badge{border-radius:99px;padding:4px 10px;font-size:11px;font-weight:700}
+.badge.ok{color:var(--teal);background:#67d0b11c;border:1px solid #67d0b14d}
+.badge.bad{color:#ffb0a7;background:#e86d611c;border:1px solid #e86d614d}
+.result-chip{white-space:nowrap}
+.order-comparison{display:grid;gap:11px;margin-top:16px}
+.order-slot{display:grid;grid-template-columns:56px 1fr 1fr 30px;gap:10px;align-items:center;background:#0b1110;border:1px solid #293732;border-radius:11px;padding:13px 14px;grid-template-areas:"chip target actual mark" "explain explain explain explain"}
+.order-slot.correct{border-color:#699d84}
+.order-slot.mismatch{border-color:#a45c54;box-shadow:0 0 18px #e86d611f}
+.order-slot-chip{grid-area:chip}
+.order-slot-chip .chip{width:46px;height:46px;font-size:13px;cursor:default}
+.order-slot-box{min-width:0}
+.order-slot-label{font-size:10px;color:#718077;letter-spacing:.06em}
+.order-slot-body{font-size:13px;color:#e5ebe4;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.order-slot-mark{grid-area:mark;font-size:19px;font-weight:800;text-align:center}
+.order-slot.correct .order-slot-mark{color:var(--teal)}
+.order-slot.mismatch .order-slot-mark{color:var(--red)}
+.order-explain{grid-area:explain;font-size:11px;line-height:1.6;color:#a9b5ae;border-top:1px dashed #2c3a34;padding-top:9px}
+.order-slot.mismatch .order-explain{color:#ffb0a7}
+.hand-rules-grid{display:grid;gap:10px;margin-top:16px}
+.hand-rule-row{display:flex;align-items:center;gap:14px;background:#0b1110;border:1px solid #293732;border-radius:11px;padding:10px 13px;flex-wrap:wrap}
+.hand-rule-cards{display:flex;gap:4px}
+.mini-card{width:34px;height:48px;border-radius:5px;background:#f4f1e7;color:#191b17;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;box-shadow:0 2px 5px #0004;flex:none}
+.mini-card .rank{font-size:13px;line-height:1}
+.mini-card .suit{font-size:11px;margin-top:1px}
+.mini-card.red{color:#c3423d}
+.hand-rule-name{font-size:14px;font-weight:800;color:var(--gold-2)}
+.hand-rule-detail{font-size:11px;color:#a9b5ae;margin-top:3px;line-height:1.5}
+.hand-rule-text{flex:1;min-width:150px}
+.rules-intro,.order-intro{color:#8e9d94;font-size:12px;margin-top:6px;line-height:1.6}
+.result-panel-note{color:#718077;font-size:11px;margin-top:8px;line-height:1.5}
+@media(max-width:600px){
+  .playing-card.small{height:52px;width:37px}
+  .playing-card.small .rank{font-size:13px}
+  .playing-card.small .suit{font-size:11px}
+  .order-slot{grid-template-columns:46px 1fr 1fr 24px;padding:11px 10px;gap:8px}
+  .order-slot-chip .chip{width:38px;height:38px;font-size:11px}
+  .order-slot-body{font-size:11px}
+  .mini-card{width:26px;height:38px}
+  .mini-card .rank{font-size:10px}
+  .mini-card .suit{font-size:9px}
+}

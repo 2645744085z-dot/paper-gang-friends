@@ -5,6 +5,20 @@
   const PHASE_NAMES = { preflop: '翻牌前', flop: '翻牌', turn: '转牌', river: '河牌', showdown: '结算' };
   const RANK_LABEL = { 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9', 10: '10', 11: 'J', 12: 'Q', 13: 'K', 14: 'A' };
 
+  /* 牌型大小规则（与 src/poker.ts 的评估逻辑一致，从大到小） */
+  const HAND_RULES = [
+    { rank: 10, name: '皇家同花顺', detail: '同一花色的 A、K、Q、J、10，最大牌型。', cards: [[14, '♠'], [13, '♠'], [12, '♠'], [11, '♠'], [10, '♠']] },
+    { rank: 9, name: '同花顺', detail: '同一花色的连续五张牌（A2345 最小，不与皇家同花顺重叠）。', cards: [[9, '♥'], [8, '♥'], [7, '♥'], [6, '♥'], [5, '♥']] },
+    { rank: 8, name: '四条', detail: '四张点数相同的牌，加一张踢脚牌。', cards: [[14, '♠'], [14, '♥'], [14, '♣'], [14, '♦'], [13, '♠']] },
+    { rank: 7, name: '葫芦', detail: '三条加一对。', cards: [[14, '♠'], [14, '♥'], [14, '♣'], [13, '♦'], [13, '♠']] },
+    { rank: 6, name: '同花', detail: '五张同一花色的牌，点数不连续。', cards: [[2, '♠'], [4, '♠'], [7, '♠'], [9, '♠'], [11, '♠']] },
+    { rank: 5, name: '顺子', detail: '五张连续点数的牌，花色可不同；A2345 视为最小顺子。', cards: [[14, '♠'], [13, '♥'], [12, '♣'], [11, '♦'], [10, '♠']] },
+    { rank: 4, name: '三条', detail: '三张点数相同的牌，加两张踢脚牌。', cards: [[14, '♠'], [14, '♥'], [14, '♦'], [12, '♣'], [13, '♠']] },
+    { rank: 3, name: '两对', detail: '两组对子，加一张踢脚牌。', cards: [[14, '♠'], [14, '♥'], [13, '♣'], [13, '♦'], [12, '♠']] },
+    { rank: 2, name: '一对', detail: '一组对子，加三张踢脚牌。', cards: [[14, '♠'], [14, '♥'], [13, '♣'], [12, '♦'], [11, '♠']] },
+    { rank: 1, name: '高牌', detail: '不满足以上牌型时，依次比较最大单牌。', cards: [[14, '♠'], [13, '♥'], [12, '♣'], [11, '♦'], [4, '♠']] },
+  ];
+
   const $ = (id) => document.getElementById(id);
   const els = {
     homeView: $('homeView'), lobbyView: $('lobbyView'), gameView: $('gameView'), resultView: $('resultView'),
@@ -21,6 +35,7 @@
     nextPhaseButton: $('nextPhaseButton'), nextHeistButton: $('nextHeistButton'),
     eventStatus: $('eventStatus'), eventLog: $('eventLog'), statsBody: $('statsBody'),
     resultHero: $('resultHero'), resultPlayers: $('resultPlayers'), resultStats: $('resultStats'),
+    orderComparison: $('orderComparison'), handRules: $('handRules'),
     resultNextButton: $('resultNextButton'), toastRegion: $('toastRegion'),
   };
 
@@ -270,6 +285,32 @@
     suit.textContent = card.suit;
     div.append(rank, suit);
     return div;
+  }
+
+  /* 结算页用的迷你牌面（规则示例、手牌展示共用） */
+  function miniCardNode(rank, suit) {
+    const div = document.createElement('div');
+    const isRed = suit === '♥' || suit === '♦';
+    div.className = `mini-card${isRed ? ' red' : ''}`;
+    const rankEl = document.createElement('div');
+    rankEl.className = 'rank';
+    rankEl.textContent = RANK_LABEL[rank] ?? rank;
+    const suitEl = document.createElement('div');
+    suitEl.className = 'suit';
+    suitEl.textContent = suit;
+    div.append(rankEl, suitEl);
+    return div;
+  }
+
+  function handCardsNode(cards) {
+    const wrap = document.createElement('div');
+    wrap.className = 'result-cards';
+    for (const c of cards) {
+      const node = cardNode(c);
+      node.classList.add('small');
+      wrap.appendChild(node);
+    }
+    return wrap;
   }
 
   function render() {
@@ -538,7 +579,7 @@
     els.resultPlayers.innerHTML = '';
     for (const p of result.players) {
       const row = document.createElement('div');
-      row.className = 'result-player';
+      row.className = `result-player${p.finalChip === p.targetChip ? '' : ' chip-wrong'}`;
       const rank = document.createElement('div');
       rank.className = 'result-rank';
       rank.textContent = `#${p.order}`;
@@ -547,10 +588,23 @@
       const name = document.createElement('div');
       name.className = 'result-player-name';
       name.textContent = p.name;
+      const cards = handCardsNode(p.hand);
       const detail = document.createElement('div');
       detail.className = 'result-player-detail';
-      detail.textContent = `${p.result.name}（关键牌 ${p.result.keyCards || '—'}）｜手牌 ${p.hand.map((c) => (RANK_LABEL[c.rank] ?? c.rank) + c.suit).join(' ')}`;
-      main.append(name, detail);
+      detail.textContent = `${p.result.name}（关键牌 ${p.result.keyCards || '—'}）`;
+      const chipLine = document.createElement('div');
+      chipLine.className = 'result-player-chips';
+      chipLine.appendChild(chipNode(p.finalChip ?? 0));
+      const chipText = document.createElement('span');
+      chipText.textContent = p.finalChip != null
+        ? `终局筹码 ${p.finalChip}★ · 目标 ${p.targetChip}★`
+        : `未选择筹码 · 目标 ${p.targetChip}★`;
+      chipLine.appendChild(chipText);
+      const badge = document.createElement('span');
+      badge.className = `badge ${p.finalChip === p.targetChip ? 'ok' : 'bad'}`;
+      badge.textContent = p.finalChip === p.targetChip ? '✓ 筹码正确' : `✗ 筹码不符，应为 ${p.targetChip}★`;
+      chipLine.appendChild(badge);
+      main.append(name, cards, detail, chipLine);
       const chip = document.createElement('div');
       chip.className = 'result-chip';
       chip.appendChild(chipNode(p.finalChip ?? 0));
@@ -558,6 +612,9 @@
       row.append(rank, main, chip);
       els.resultPlayers.appendChild(row);
     }
+
+    renderOrderComparison(result);
+    renderHandRules();
 
     els.resultStats.innerHTML = '<div class="result-stat-row header"><span>玩家</span><span>抢筹</span><span>被抢</span><span>换筹</span><span>操作</span></div>';
     for (const p of state.players) {
@@ -585,6 +642,77 @@
     }
   }
 
+  /* 抢筹顺序对照：目标顺序（牌力弱→强 对应 1★→N★）逐位对比实际顺序 */
+  function renderOrderComparison(result) {
+    els.orderComparison.innerHTML = '';
+    const slots = result.orderComparison || [];
+    if (!slots.length) {
+      const empty = document.createElement('div');
+      empty.className = 'event-empty';
+      empty.textContent = '本局没有可对照的顺序数据。';
+      els.orderComparison.appendChild(empty);
+      return;
+    }
+    for (const slot of slots) {
+      const row = document.createElement('div');
+      row.className = `order-slot${slot.correct ? ' correct' : ' mismatch'}`;
+      const chipWrap = document.createElement('div');
+      chipWrap.className = 'order-slot-chip';
+      chipWrap.appendChild(chipNode(slot.chipValue));
+      const target = document.createElement('div');
+      target.className = 'order-slot-box';
+      const targetLabel = document.createElement('div');
+      targetLabel.className = 'order-slot-label';
+      targetLabel.textContent = '目标（按牌力）';
+      const targetBody = document.createElement('div');
+      targetBody.className = 'order-slot-body';
+      targetBody.textContent = `${slot.target.name} · ${slot.target.result.name}`;
+      target.append(targetLabel, targetBody);
+      const actual = document.createElement('div');
+      actual.className = 'order-slot-box';
+      const actualLabel = document.createElement('div');
+      actualLabel.className = 'order-slot-label';
+      actualLabel.textContent = '实际（本局终局筹码）';
+      const actualBody = document.createElement('div');
+      actualBody.className = 'order-slot-body';
+      actualBody.textContent = slot.actual
+        ? `${slot.actual.name} · ${slot.actual.result.name} · ${slot.actual.finalChip != null ? `${slot.actual.finalChip}★` : '未选筹码'}`
+        : '无人持有这枚筹码';
+      actual.append(actualLabel, actualBody);
+      const mark = document.createElement('div');
+      mark.className = 'order-slot-mark';
+      mark.textContent = slot.correct ? '✓' : '✗';
+      const explain = document.createElement('div');
+      explain.className = 'order-explain';
+      explain.textContent = slot.correct ? `正确：${slot.explanation}` : `警报原因：${slot.explanation}`;
+      row.append(chipWrap, target, actual, mark, explain);
+      els.orderComparison.appendChild(row);
+    }
+  }
+
+  /* 牌型大小规则（示例牌面 + 中文说明，与 poker.ts 评估逻辑一致） */
+  function renderHandRules() {
+    els.handRules.innerHTML = '';
+    for (const rule of HAND_RULES) {
+      const row = document.createElement('div');
+      row.className = 'hand-rule-row';
+      const cards = document.createElement('div');
+      cards.className = 'hand-rule-cards';
+      for (const [rank, suit] of rule.cards) cards.appendChild(miniCardNode(rank, suit));
+      const text = document.createElement('div');
+      text.className = 'hand-rule-text';
+      const name = document.createElement('div');
+      name.className = 'hand-rule-name';
+      name.textContent = rule.name;
+      const detail = document.createElement('div');
+      detail.className = 'hand-rule-detail';
+      detail.textContent = rule.detail;
+      text.append(name, detail);
+      row.append(cards, text);
+      els.handRules.appendChild(row);
+    }
+  }
+
   function renderEnded() {
     show('resultView');
     const win = state.vaults >= 3;
@@ -596,6 +724,8 @@
       <p>${win ? '三只保险箱全部打开，赃款到手，全员撤离。' : '警报累计三次，行动小组被迫撤退。'}｜共进行 ${state.heistNumber} 次劫案</p>`;
     els.resultPlayers.innerHTML = '';
     els.resultStats.innerHTML = '';
+    els.orderComparison.innerHTML = '';
+    renderHandRules();
     els.resultNextButton.classList.remove('hidden');
     els.resultNextButton.disabled = false;
     els.resultNextButton.innerHTML = '返回首页 <span>→</span>';
