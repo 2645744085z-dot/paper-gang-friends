@@ -6,21 +6,17 @@
   "description": "纸牌帮·群友专属版：中文实时联机协作扑克劫案",
   "engines": { "node": ">=20" },
   "scripts": {
-    "dev": "tsx src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "express": "^4.21.2",
-    "socket.io": "^4.8.1"
+    "dev": "node scripts/prepare-worker.mjs && wrangler dev --local",
+    "dev:cloudflare": "node scripts/prepare-worker.mjs && wrangler dev --local",
+    "build": "tsc && tsc -p tsconfig.worker.json --noEmit && node scripts/prepare-worker.mjs",
+    "test": "vitest run",
+    "deploy:cloudflare": "npm run build && wrangler deploy"
   },
   "devDependencies": {
-    "@types/express": "^5.0.0",
     "@types/node": "^22.10.2",
-    "socket.io-client": "^4.8.1",
-    "tsx": "^4.19.2",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "wrangler": "4.158.0",
+    "@cloudflare/workers-types": "^5.20261104.1"
   }
 }

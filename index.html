@@ -55,6 +55,6 @@
       <section id="resultView" class="view hidden"><header class="topbar"><div class="brand-mini">纸牌帮<span>·</span>群友专属版</div><div class="connection-badge connected">行动结算</div></header><div class="result-layout"><div id="resultHero" class="panel result-hero"></div><div class="panel result-hands"><div class="section-label">最终牌型排序</div><div class="result-panel-note">结算后公开所有手牌；对局进行中，其他玩家手牌始终保持隐藏。</div><div id="resultPlayers"></div></div><div class="panel order-panel"><div class="section-label">抢筹顺序对照</div><h2>目标顺序与本局实际顺序</h2><p class="order-intro">从 1 星到最高星：牌力由弱到强。金色为正确，红色为导致警报的位置。</p><div id="orderComparison" class="order-comparison"></div></div><div class="panel result-stats"><div class="section-label">本局事件统计</div><div id="resultStats"></div></div><div class="panel hand-rules-panel"><div class="section-label">牌型大小规则</div><h2>从大到小</h2><p class="rules-intro">使用标准德州扑克 7 张牌取最佳 5 张逻辑；A2345 视为最小顺子。</p><div id="handRules" class="hand-rules-grid"></div></div><button id="resultNextButton" class="primary-button result-next">返回行动 <span>→</span></button></div></section>
     </main>
     <div id="toastRegion" class="toast-region" aria-live="polite"></div>
-    <script src="/socket.io/socket.io.js"></script><script src="/app.js"></script>
+    <script src="/ws-client.js"></script><script src="/app.js"></script>
   </body>
 </html>
